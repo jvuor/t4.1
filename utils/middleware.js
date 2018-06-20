@@ -12,4 +12,5 @@ const logger = (request, response, next) => {
   
   module.exports = {
     logger,
-    error }
+    error
+  }
