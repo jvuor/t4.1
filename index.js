@@ -4,39 +4,18 @@ const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
-
-const Blog = mongoose.model('Blog', {
-  title: String,
-  author: String,
-  url: String,
-  likes: Number
-})
-
-module.exports = Blog
-
-app.use(cors())
-app.use(bodyParser.json())
+const middleware = require('./utils/middleware')
+const blogRouter = require('./controllers/blogs')
 
 const mongoUrl = process.env.MONGOURL
 mongoose.connect(mongoUrl)
 
-app.get('/api/blogs', (request, response) => {
-  Blog
-    .find({})
-    .then(blogs => {
-      response.json(blogs)
-    })
-})
+app.use(cors())
+app.use(bodyParser.json())
+app.use(middleware.logger)
+app.use('/api/blogs', blogRouter)
 
-app.post('/api/blogs', (request, response) => {
-  const blog = new Blog(request.body)
-
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result)
-    })
-})
+app.use(middleware.error)
 
 const PORT = 3003
 app.listen(PORT, () => {
