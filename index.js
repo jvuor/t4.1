@@ -6,10 +6,18 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 const middleware = require('./utils/middleware')
 const blogRouter = require('./controllers/blogs')
+const config = require('./utils/config')
 
-const mongoUrl = process.env.MONGOURL
-mongoose.connect(mongoUrl)
+const mongoUrl = config.mongoUrl
+const port = config.port
 
+mongoose
+  .connect(mongoUrl)
+  .then( () => { console.log('connected to database', mongoUrl)})
+  .catch( err => {
+    console.log(err)
+  })
+  
 app.use(cors())
 app.use(bodyParser.json())
 app.use(middleware.logger)
@@ -17,7 +25,14 @@ app.use('/api/blogs', blogRouter)
 
 app.use(middleware.error)
 
-const PORT = 3003
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+const server = http.createServer(app)
+
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`)
 })
+
+server.on('close', () => [
+  mongoose.connection.close()
+])
+
+module.exports = { app, server}
