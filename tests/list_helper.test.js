@@ -61,7 +61,7 @@ const testArray3 = [
   }  
 ]
 
-describe('dummy', () => {
+describe.skip('dummy', () => {
   test('dummy is called', () => {
     const blogs = testArray1
 
@@ -70,7 +70,7 @@ describe('dummy', () => {
   })
 })
 
-describe('totalLikes', () => {
+describe.skip('totalLikes', () => {
   test('empty array', () => {
     const blogs = testArray1
 
@@ -91,7 +91,7 @@ describe('totalLikes', () => {
   })
 })
 
-describe('favoriteBlog', () => {
+describe.skip('favoriteBlog', () => {
     test('empty array', () => {
     const blogs = testArray1
 
@@ -121,7 +121,7 @@ describe('favoriteBlog', () => {
   })
 })
 
-describe ('mostBlogs', () => {
+describe.skip('mostBlogs', () => {
   test('empty array', () => {
     const blogs = testArray1
 
@@ -152,7 +152,7 @@ describe ('mostBlogs', () => {
   })
 })
 
-describe ('mostLikes', () => {
+describe.skip('mostLikes', () => {
   test('empty array', () => {
     const blogs = testArray1
 
