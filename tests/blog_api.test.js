@@ -2,79 +2,30 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/blog')
-
-const initialBlogArray = [
-    {
-      _id: "5a422a851b54a676234d17f7",
-      title: "React patterns",
-      author: "Michael Chan",
-      url: "https://reactpatterns.com/",
-      likes: 7,
-      __v: 0
-    },
-    {
-      _id: "5a422aa71b54a676234d17f8",
-      title: "Go To Statement Considered Harmful",
-      author: "Edsger W. Dijkstra",
-      url: "http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html",
-      likes: 5,
-      __v: 0
-    },
-    {
-      _id: "5a422b3a1b54a676234d17f9",
-      title: "Canonical string reduction",
-      author: "Edsger W. Dijkstra",
-      url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-      likes: 12,
-      __v: 0
-    },
-    {
-      _id: "5a422b891b54a676234d17fa",
-      title: "First class tests",
-      author: "Robert C. Martin",
-      url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
-      likes: 10,
-      __v: 0
-    },
-    {
-      _id: "5a422ba71b54a676234d17fb",
-      title: "TDD harms architecture",
-      author: "Robert C. Martin",
-      url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
-      likes: 0,
-      __v: 0
-    },
-    {
-      _id: "5a422bc61b54a676234d17fc",
-      title: "Type wars",
-      author: "Robert C. Martin",
-      url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
-      likes: 2,
-      __v: 0
-    }  
-  ]
+const { initialBlogArray, formatBlog, blogsFromDB } = require('./test_helper')
 
 beforeAll(async () => {
     await Blog.remove({})
 
-    for (var blog of initialBlogArray) {
-        var BlogObject = new Blog(blog)
-        await BlogObject.save()
-    }
+    const blogObjects = initialBlogArray.map(n => new Blog(n))
+    await Promise.all(blogObjects.map(n => n.save()))
 })
-describe('/get tests', () => {
-  test('blogs are returned as json', async () => {
-    await api
+
+describe('GET tests', () => {
+  test('blogs are returned as json from api', async () => {
+    blogResult = await blogsFromDB()
+
+    const response = await api
       .get('/api/blogs')
       .expect(200)
       .expect('Content-Type', /application\/json/)
-  })
+    
+    returnedBlogs = response.body.map(m => m.title)
 
-  test('there are six blogs', async () => {
-    const response = await api
-      .get('/api/blogs')
-
-    expect(response.body.length).toBe(6)
+    expect(returnedBlogs.length).toBe(blogResult.length)
+    blogResult.forEach(blog => {
+      expect(returnedBlogs).toContain(blog.title)
+    });
   })
 
   test('the first blog is by Chan-man', async () => {
@@ -103,7 +54,7 @@ describe('/get tests', () => {
   })
 })
 
-describe('/post tests', () => {
+describe('POST tests', () => {
   test ('a new blog can be posted', async () => {
     const newBlog = {
       title: 'Testi Blogi',
@@ -180,7 +131,6 @@ describe('/post tests', () => {
 
     const allBlogs = await api.get('/api/blogs')
     const testBlog = allBlogs.body.find(x => x.title === 'Testblog 2')
-    console.log(testBlog)
     savedBlog = await api
       .get(`/api/blogs/${testBlog._id}`)
 
@@ -191,7 +141,89 @@ describe('/post tests', () => {
 
   })
 })
+
+describe('DELETE tests', () => {
+  test('a blog entry can be deleted', async () => {
+    const blogsBefore = await blogsFromDB()
+
+    const blogsAPI = await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+
+    const testBlogs = blogsAPI.body
+    const lastId = testBlogs[testBlogs.length - 1]._id
+
+    await api
+      .delete(`/api/blogs/${lastId}`)
+      .expect(204)
+
+    const blogsAfter = await blogsFromDB()
+
+    expect(blogsBefore.length).toBe(blogsAfter.length + 1)
+
+  })
+
+  test('deleting an invalid id fails', async () => {
+    const blogsBefore = await blogsFromDB()
+
+    const badId = '5b33daae80d68d376483'
+
+    await api
+      .delete(`/api/blogs/${badId}`)
+      .expect(400)
+    
+    const blogsAfter = await blogsFromDB()
+
+    expect(blogsBefore).toEqual(blogsAfter)
+  })
+})
   
+describe('PUT tests', () => {
+  test('changing data with a PUT request', async () => {
+    const blogsBefore = await blogsFromDB()
+
+    const blogsAPI = await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+
+    const testBlogs = blogsAPI.body
+    const lastId = testBlogs[testBlogs.length - 1]._id
+    var newBlogData = testBlogs[testBlogs.length -1]
+    console.log('newblogdate', newBlogData)
+    newBlogData.likes += 10
+
+
+    await api
+      .put(`/api/blogs/${lastId}`)
+      .send(newBlogData)
+      .expect(200)
+
+    const blogsAfter = await blogsFromDB()
+
+    expect(blogsBefore[blogsBefore.length - 1].likes + 10)
+      .toBe(blogsAfter[blogsAfter.length - 1].likes)
+  })
+
+  test('PUT-request to invalid id fails', async() => {
+    const blogsBefore = await blogsFromDB()
+
+    const badId = '5b33daae80d68d376483'
+
+    await api
+      .put(`/api/blogs/${badId}`)
+      .expect(400)
+
+    const blogsAfter = await blogsFromDB()
+
+    expect(blogsBefore).toEqual(blogsAfter)
+
+  })
+})
+
 afterAll(() => {
   server.close()
 })

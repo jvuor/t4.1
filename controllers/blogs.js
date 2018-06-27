@@ -26,7 +26,7 @@ blogRouter.get('/:id', async (request, response) => {
         if (blog) {
             response.json(blog)
         } else {
-            response.status(404).end
+            response.status(404).end()
         }
 
     } catch (exception) {
@@ -37,6 +37,7 @@ blogRouter.get('/:id', async (request, response) => {
 
 blogRouter.post('/', async (request, response) => {
     const body = request.body
+    //console.log(body, body.title)
     if(body.title === undefined) {
         return response.status(400).json({error: "title missing"})
     }
@@ -62,6 +63,37 @@ blogRouter.post('/', async (request, response) => {
         response.status(500).json({error: 'error in post request'})
     }
 })
+
+blogRouter.delete('/:id', async (request, response) => {
+    const id = request.params.id
+
+    try {
+        await Blog.findByIdAndRemove(id)
+
+        response.status(204).end()
+
+    } catch(exception) {
+        //console.log(exception)
+        response.status(400).send({error: 'bad id'})
+    }
+})
   
+blogRouter.put('/:id', async (request, response) => {
+    try {
+        const id = request.params.id
+        const changedBlog = {
+            author: request.body.author,
+            title: request.body.title,
+            url: request.body.url,
+            likes: request.body.likes
+        }
+
+        const updatedBlog = await Blog.findByIdAndUpdate(id, changedBlog)
+
+        response.status(200).json(updatedBlog)
+    } catch (exception) {
+        response.status(400).end()
+    }
+})
 
 module.exports = blogRouter
