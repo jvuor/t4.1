@@ -1,4 +1,5 @@
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 const initialBlogArray = [
     {
@@ -51,20 +52,43 @@ const initialBlogArray = [
     }  
   ]
 
+const initialUserArray = [
+  {
+    username: "testuser",
+    name: "Koe Käyttäjä",
+    adult: true,
+    password: "salasana",
+    blogs: []
+  },
+  {
+    username: "anotheruser",
+    name: "Eri Käyttäjä",
+    adult: true,
+    password: "12345",
+    blogs: []
+  }
+]
 
 const formatBlog = (blog) => {
-    return {
-        author: blog.author,
-        title: blog.title,
-        url : blog.url,
-        likes: blog.likes,
-        id: blog._id
-    }
+  return {
+    author: blog.author,
+    title: blog.title,
+    url : blog.url,
+    likes: blog.likes,
+    id: blog._id
+  }
 }
 
 const blogsFromDB = async () => {
-    const blogs = await Blog.find({})
-    return blogs.map(formatBlog)
+  const blogs = await Blog.find({})
+  return blogs.map(formatBlog)
 }
 
-module.exports = { initialBlogArray, formatBlog, blogsFromDB }
+const usersFromDB = async () => {
+  const users = await User.find({})
+  return users.map(m => User.format(m))
+}
+
+
+module.exports = { initialBlogArray, initialUserArray, formatBlog,
+   blogsFromDB, usersFromDB }

@@ -6,6 +6,7 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 const middleware = require('./utils/middleware')
 const blogRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
 const config = require('./utils/config')
 
 const mongoUrl = config.mongoUrl
@@ -22,6 +23,7 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(middleware.logger)
 app.use('/api/blogs', blogRouter)
+app.use('/api/users', usersRouter)
 
 app.use(middleware.error)
 

@@ -2,13 +2,19 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/blog')
-const { initialBlogArray, formatBlog, blogsFromDB } = require('./test_helper')
+const User = require('../models/user')
+const { initialBlogArray, formatBlog, blogsFromDB, initialUserArray, usersFromDB } = require('./test_helper')
 
 beforeAll(async () => {
     await Blog.remove({})
 
     const blogObjects = initialBlogArray.map(n => new Blog(n))
     await Promise.all(blogObjects.map(n => n.save()))
+
+    await User.remove({})
+
+    const userObjects = initialUserArray.map(n => new User(n))
+    await Promise.all(userObjects.map(n => n.save()))
 })
 
 describe('GET tests', () => {
@@ -221,6 +227,101 @@ describe('PUT tests', () => {
 
     expect(blogsBefore).toEqual(blogsAfter)
 
+  })
+})
+
+describe('User api tests', () => {
+  test('GET works and returns the results as JSON', async () => {
+      userResult = await usersFromDB()
+  
+      const response = await api
+        .get('/api/users')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+      
+      returnedUsers = response.body.map(m => m.name)
+  
+      expect(returnedUsers.length).toBe(userResult.length)
+      userResult.forEach(user => {
+        expect(returnedUsers).toContain(user.name)
+      });
+    })
+
+  test('User can be added', async () => {
+    const usersBefore = await usersFromDB()
+
+    const newUser = {
+      username: "testcuser",
+      name: "Urhea Jest-mies",
+      adult: false,
+      password: "jestjest"
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAfter = await usersFromDB()
+
+    expect(usersBefore.length + 1).toBe(usersAfter.length)
+
+  })
+
+  test('Duplicate usernames are not allowed', async () => {
+    const usersBefore = await usersFromDB()
+
+    const duplicateUser = {
+      username: "testuser",
+      name: "Me Shouldfail",
+      adult: true,
+      password: "jestjest"
+    }
+
+    await api
+      .post('/api/users')
+      .send(duplicateUser)
+      .expect(500)
+
+    const usersAfter = await usersFromDB()
+
+    expect(usersBefore.length).toBe(usersAfter.length)
+  })
+
+  test('Too short passwords are not allowed', async () => {
+    const usersBefore = await usersFromDB()
+
+    const badPasswordUser = {
+      username: "tryitout",
+      name: "Will Failthough",
+      adult: false,
+      password: "1"
+    }
+
+    await api
+      .post('/api/users')
+      .send(badPasswordUser)
+      .expect(500)
+
+    const usersAfter = await usersFromDB()
+
+    expect(usersBefore.length).toBe(usersAfter.length)
+  })
+
+  test('adult defaults to true if not given', async () => {
+    const noAdultUser = {
+      username: "maybeadult",
+      name: "But Whoknows",
+      password: "goodpassword"
+    }
+
+    const savedUser = await api
+      .post('/api/users')
+      .send(noAdultUser)
+      .expect(201)
+
+    expect(savedUser.body.adult).toBe(true)
   })
 })
 
