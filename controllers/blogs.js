@@ -1,12 +1,16 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 blogRouter.get('/', async (request, response) => {
     try {
-        const blogs = await Blog.find({})
+        const blogs = await Blog
+            .find({})
+            .populate('user', {username: 1, name: 1})
+        const formattedBlogs = blogs.map(Blog.format)
 
         if (blogs) {
-            response.json(blogs)
+            response.json(formattedBlogs)
         } else {
             response.status(404).end()
         }
@@ -24,7 +28,7 @@ blogRouter.get('/:id', async (request, response) => {
         const blog = await Blog.findById(id)
 
         if (blog) {
-            response.json(blog)
+            response.json(Blog.format(blog))
         } else {
             response.status(404).end()
         }
@@ -47,16 +51,25 @@ blogRouter.post('/', async (request, response) => {
     if(body.url === undefined) {
         return response.status(400).json({error: "url missing"})
     }
-    
-    const blog = new Blog(request.body)
 
-    if (blog.likes === undefined) {
-        blog.likes = 0
-    }
+    const postingUser = await User.findOne({username: "testuser"})
+    
+    const blog = new Blog({
+        author: body.author,
+        title: body.title,
+        url: body.url,
+        likes: body.likes === undefined ? 0 : body.likes,
+        user: postingUser._id
+    })
 
     try {
         const blogResponse = await blog.save()
         response.status(201).json(blogResponse)
+
+        const user = await User.findById(postingUser._id)
+        user.blogs = user.blogs.concat(blogResponse._id)
+
+        await user.save()
 
     } catch (exception) {
         console.log(exception)

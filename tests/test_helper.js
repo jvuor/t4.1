@@ -69,16 +69,6 @@ const initialUserArray = [
   }
 ]
 
-const formatBlog = (blog) => {
-  return {
-    author: blog.author,
-    title: blog.title,
-    url : blog.url,
-    likes: blog.likes,
-    id: blog._id
-  }
-}
-
 const blogsFromDB = async () => {
   const blogs = await Blog.find({})
   return blogs.map(formatBlog)
@@ -90,5 +80,5 @@ const usersFromDB = async () => {
 }
 
 
-module.exports = { initialBlogArray, initialUserArray, formatBlog,
+module.exports = { initialBlogArray, initialUserArray,
    blogsFromDB, usersFromDB }

@@ -3,18 +3,18 @@ const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/blog')
 const User = require('../models/user')
-const { initialBlogArray, formatBlog, blogsFromDB, initialUserArray, usersFromDB } = require('./test_helper')
+const { initialBlogArray, blogsFromDB, initialUserArray, usersFromDB } = require('./test_helper')
 
 beforeAll(async () => {
-    await Blog.remove({})
-
-    const blogObjects = initialBlogArray.map(n => new Blog(n))
-    await Promise.all(blogObjects.map(n => n.save()))
-
     await User.remove({})
 
     const userObjects = initialUserArray.map(n => new User(n))
     await Promise.all(userObjects.map(n => n.save()))
+
+    await Blog.remove({})
+
+    const blogObjects = initialBlogArray.map(n => new Blog(n))
+    await Promise.all(blogObjects.map(n => n.save()))
 })
 
 describe('GET tests', () => {
@@ -61,7 +61,7 @@ describe('GET tests', () => {
 })
 
 describe('POST tests', () => {
-  test ('a new blog can be posted', async () => {
+  test('a new blog can be posted', async () => {
     const newBlog = {
       title: 'Testi Blogi',
       author: 'Testi Kirjoittaja',

@@ -23,11 +23,11 @@ usersRouter.post('/', async (request, response) => {
         var user = new User({
             username: body.username,
             name: body.name,
-            adult: body.adult,
+            adult: body.adult === undefined ? true : body.adult,
             passwordHash
         })
 
-        if (user.adult === undefined) {user.adult = true}
+        //if (user.adult === undefined) {user.adult = true}
 
         const savedUser = await user.save()
 
@@ -40,7 +40,10 @@ usersRouter.post('/', async (request, response) => {
 
 usersRouter.get('/', async (request, response) => {
     try {
-        const users = await User.find({})
+        const users = await User
+            .find({})
+            .populate('blogs', {author:1, title:1, url:1, likes:1 })
+            
         userList = users.map(m => User.format(m))
 
         response
