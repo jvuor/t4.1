@@ -93,13 +93,29 @@ blogRouter.delete('/:id', async (request, response) => {
     const id = request.params.id
 
     try {
-        await Blog.findByIdAndRemove(id)
+        const token = request.token
+        const decodedToken = jwt.verify(token, process.env.SECRET)
 
-        response.status(204).end()
+        const blog = await Blog.findById(id)
+
+        if (blog.user.toString() === decodedToken.id.toString()) {
+            await Blog.findByIdAndRemove(id)
+
+            return response
+                .status(204)
+                .end()
+        }
+
+        return response
+            .status(401)
+            .send({error: 'bad or missing token'})
 
     } catch(exception) {
-        //console.log(exception)
-        response.status(400).send({error: 'bad id'})
+        if (exception.name === 'JsonWebTokenError') {
+            response.status(401).json({error: exception.message})
+        } else {
+            response.status(400).send({error: 'bad id'})
+        }
     }
 })
   
