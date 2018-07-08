@@ -72,7 +72,7 @@ blogRouter.post('/', async (request, response) => {
         })
 
         const blogResponse = await blog.save()
-        response.status(201).json(blogResponse)
+        response.status(201).json(Blog.format(blogResponse))
 
         const user = await User.findById(postingUser._id)
         user.blogs = user.blogs.concat(blogResponse._id)
@@ -120,7 +120,21 @@ blogRouter.delete('/:id', async (request, response) => {
 })
   
 blogRouter.put('/:id', async (request, response) => {
+    // a note about the security here:
+    // currently, the system allows you to modify /ANY/ data as long as you have an accepted token.
+    // a smarter way would be to first check what changes the user is going to make, and then:
+    // -allow vote changes to any tokened user
+    // -allow author/title/url changes only to the user who created the note
+
+    // TODO: implement the above
     try {
+        const token = request.token
+        const decodedToken = jwt.verify(token, process.env.SECRET)
+
+        if (!token || !decodedToken) {
+            return response.status(401).send('token missing or invalid')
+        }
+
         const id = request.params.id
         const changedBlog = {
             author: request.body.author,
@@ -128,10 +142,8 @@ blogRouter.put('/:id', async (request, response) => {
             url: request.body.url,
             likes: request.body.likes
         }
-
         const updatedBlog = await Blog.findByIdAndUpdate(id, changedBlog)
-
-        response.status(200).json(updatedBlog)
+        response.status(200).json(Blog.format(updatedBlog))
     } catch (exception) {
         response.status(400).end()
     }
