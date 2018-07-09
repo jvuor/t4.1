@@ -9,6 +9,7 @@ const blogRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
 const loginRouter = require('./controllers/login')
 const config = require('./utils/config')
+const path = require('path')
 
 const mongoUrl = config.mongoUrl
 const port = config.port
@@ -28,6 +29,7 @@ app.use(middleware.tokenExtractor)
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
+app.get('*', express.static('build'))
 app.use('*', express.static('build'))
 
 app.use(middleware.error)
